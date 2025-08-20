@@ -83,6 +83,7 @@ public class VitalService {
 
         return  vitals;
     }
+
     public List<VitalAnalysisDto> mapAll(List<VitalExtractedDto> extractedVitals) {
         if (extractedVitals == null) return Collections.emptyList();
 
@@ -112,6 +113,7 @@ public class VitalService {
             String extractedUnit = extractedVital.getUnit();
             if (extractedUnit != null && !extractedUnit.isEmpty() && !extractedUnit.equals(existingVital.getUnit())) {
                 vitalDTO.setUnit(extractedUnit);  // update to new unit
+                System.out.println("extractedUnit Updated");
                 isUpdated = true;
             }else{
                 vitalDTO.setUnit(existingVital.getUnit());
@@ -138,6 +140,7 @@ public class VitalService {
                     VitalMeasurementDto existingMeasurement = existingMeasurementOpt.get();
                     if (!extractedVital.getValue().equals(existingMeasurement.getValue())) {
                         existingMeasurement.setValue(extractedVital.getValue());
+                        System.out.println("measurement Updated");
                         isUpdated = true;
                     }
                 } else {
@@ -145,6 +148,7 @@ public class VitalService {
                     newMeasurement.setDateTime(dateTime);
                     newMeasurement.setValue(extractedVital.getValue());
                     updatedMeasurements.add(newMeasurement);
+                    System.out.println("measurement2 Updated");
                     isUpdated = true;
                 }
             }

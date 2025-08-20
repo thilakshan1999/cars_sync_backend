@@ -4,12 +4,14 @@ import com.hinetics.caresync.dto.DocumentSummaryDto;
 import com.hinetics.caresync.dto.analysed.*;
 import com.hinetics.caresync.dto.extracted.DocumentExtractedDto;
 import com.hinetics.caresync.entity.*;
+import com.hinetics.caresync.enums.DocumentType;
 import com.hinetics.caresync.repository.DocumentRepository;
 import com.hinetics.caresync.service.ai.GeminiService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,9 +34,20 @@ public class DocumentService {
                 .orElseThrow(() -> new EntityNotFoundException("Document not found with id: " + id));
     }
 
-    public List<DocumentSummaryDto> getAllDocumentsSummary() {
-        List<Document> documents = documentRepository.findAll();
+    public List<DocumentSummaryDto> getAllDocumentsSummary(String type) {
+        List<Document> documents ;
 
+        if (type == null || type.trim().isEmpty() || type.equalsIgnoreCase("All")) {
+            documents = documentRepository.findAll();
+        }else {
+            try {
+                DocumentType docType = DocumentType.fromString(type);
+                documents = documentRepository.findByDocumentType(docType);
+            } catch (IllegalArgumentException ex) {
+                // fallback: if invalid type provided, return empty list (or all if you prefer)
+                documents = Collections.emptyList();
+            }
+        }
         return documents.stream()
                 .map(doc -> {
                     DocumentSummaryDto summary = new DocumentSummaryDto();
@@ -101,7 +114,7 @@ public class DocumentService {
 
         //Mad Appointment
         if (dto.getAppointments() != null) {
-            List<Appointment> appointments = appointmentService.processAppointment(dto.getAppointments());
+            List<Appointment> appointments = appointmentService.processAppointment(dto.getAppointments(),entity.getDoctors());
             entity.setAppointments(appointments);
         }
 

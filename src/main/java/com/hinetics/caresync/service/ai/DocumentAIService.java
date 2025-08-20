@@ -14,9 +14,6 @@ import java.nio.file.Path;
 
 @Service
 public class DocumentAIService {
-//    private static final String PROJECT_ID = "care-sync-467705";
-//    private static final String LOCATION = "us";
-//    private static final String PROCESSOR_ID = "6adda2a5acbf6f8d";
     @Value("${google.documentai.project-id}")
     private String projectId;
 

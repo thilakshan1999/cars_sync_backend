@@ -143,11 +143,14 @@ public class GeminiService {
                   - OTHER
                 
                 Notes:
+                - The documentName should be a short, user-friendly label. Keep it under 50 characters.
                 - If the doctor's name is not found, return an empty array for "doctors".
                 - If a doctor is found but other details are missing, you may leave them as null or empty strings.
                 - If a medicine name is not found, skip adding that entry to "medicines".
                 - For intakeInterval, use durations like "6h", "12h", "1d", etc.
                 - **Only include appointments if `appointmentDateTime` is present. Do NOT include any appointment without this field.**
+                -*Always link the appointment with the doctor mentioned in the document.\s
+                  If a doctor is listed in "doctors", use the same doctor's name in "appointments.doctorName".**
                 - **For vitals, only include entries where both `name` and `value` are present. Otherwise, skip them.**
                 Document:
                 """ + userPrompt;

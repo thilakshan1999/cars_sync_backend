@@ -109,6 +109,7 @@ public class MedService {
 
             if(extractedMedForm != existingMed.getMedForm()){
                 medDto.setMedForm(extractedMedForm);
+                System.out.println("Med Form Updated");
                 isUpdated = true;
             }else {
                 medDto.setMedForm(existingMed.getMedForm());
@@ -117,6 +118,7 @@ public class MedService {
             //healthCondition
             if (isDifferent(existingMed.getHealthCondition(), existingMed.getHealthCondition())) {
                 isUpdated = true;
+                System.out.println("Health condition Updated");
             }
             medDto.setHealthCondition(
                     nonEmptyOrDefault(existingMed.getHealthCondition(), existingMed.getHealthCondition())
@@ -125,8 +127,9 @@ public class MedService {
             //intakeInterval
             Duration extractedInterval = extractedMed.getIntakeInterval();
 
-            if(extractedInterval!=null && extractedInterval != existingMed.getIntakeInterval()){
+            if(extractedInterval!=null && !extractedInterval.equals(existingMed.getIntakeInterval()) ){
                 medDto.setIntakeInterval(extractedInterval);
+                System.out.println("Interval Updated");
                 isUpdated = true;
             }else {
                 medDto.setIntakeInterval(existingMed.getIntakeInterval());
@@ -137,6 +140,7 @@ public class MedService {
 
             if(extractedLocalStartDate!=null && extractedLocalStartDate != existingMed.getStartDate()){
                 medDto.setStartDate(extractedLocalStartDate);
+                System.out.println("Start date Updated");
                 isUpdated = true;
             }else {
                 medDto.setStartDate(existingMed.getStartDate());
@@ -147,6 +151,7 @@ public class MedService {
 
             if(extractedLocalEndDate!=null && extractedLocalEndDate != existingMed.getEndDate()){
                 medDto.setEndDate(extractedLocalEndDate);
+                System.out.println("End date Updated");
                 isUpdated = true;
             }else {
                 medDto.setEndDate(existingMed.getEndDate());
@@ -154,6 +159,7 @@ public class MedService {
 
             //Dosage
             if (isDifferent(existingMed.getDosage(), existingMed.getDosage())) {
+                System.out.println("Dosage Updated");
                 isUpdated = true;
             }
             medDto.setDosage(
@@ -164,7 +170,9 @@ public class MedService {
             IntakeInstruction extractedInstruction = extractedMed.getInstruction();
 
             if( extractedInstruction != existingMed.getInstruction()){
+
                 medDto.setInstruction(extractedInstruction);
+                System.out.println("Instruction Updated");
                 isUpdated = true;
             }else {
                 medDto.setInstruction(existingMed.getInstruction());

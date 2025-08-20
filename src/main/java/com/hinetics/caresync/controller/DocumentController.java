@@ -61,9 +61,11 @@ public class DocumentController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<DocumentSummaryDto>>> getAllDocumentsSummary() {
+    public ResponseEntity<ApiResponse<List<DocumentSummaryDto>>> getAllDocumentsSummary(
+            @RequestParam(value = "type", required = false) String type
+    ) {
         try {
-            List<DocumentSummaryDto> summaries = documentService.getAllDocumentsSummary();
+            List<DocumentSummaryDto> summaries = documentService.getAllDocumentsSummary(type);
             return ResponseEntity.ok(new ApiResponse<>(true, "Documents fetched successfully", summaries));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

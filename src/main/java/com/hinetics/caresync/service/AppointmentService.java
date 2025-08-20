@@ -34,7 +34,7 @@ public class AppointmentService {
         return appointmentRepository.findByDateTimeAndDoctorName(dateTime, doctorName);
     }
 
-    public List<Appointment> processAppointment(List<AppointmentAnalysisDto> dtoList) {
+    public List<Appointment> processAppointment(List<AppointmentAnalysisDto> dtoList, List<Doctor> processedDoctors) {
         List<Appointment> appointments = new ArrayList<>();
 
         for (AppointmentAnalysisDto appointmentDto : dtoList) {
@@ -44,9 +44,16 @@ public class AppointmentService {
                 appointment.setType(appointmentDto.getType());
                 // Assuming you have doctor entity to set
                 DoctorAnalysisDto doctorDto = appointmentDto.getDoctor();
-                 if (doctorDto!=null){
-                    Doctor doctor = doctorRepository.findByNameIgnoreCase(doctorDto.getName())
-                            .orElseThrow(() -> new IllegalArgumentException("Doctor not found with name: " + doctorDto.getName()));
+                 if (doctorDto!=null&& processedDoctors != null){
+                    Doctor doctor =processedDoctors.stream()
+                            .filter(d -> d.getName().equalsIgnoreCase(doctorDto.getName()))
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalArgumentException("Doctor not processed: " + doctorDto.getName()));
+
+//                            doctorRepository.findByNameIgnoreCase(doctorDto.getName())
+//                            .orElseThrow(() -> new IllegalArgumentException("Doctor not found with name: " + doctorDto.getName()));
+
+                     appointment.setDoctor(doctor);
                 }
                 appointment.setAppointmentDateTime(appointmentDto.getAppointmentDateTime());
 
@@ -61,9 +68,14 @@ public class AppointmentService {
                     existingAppointment.setType(appointmentDto.getType());
 
                     DoctorAnalysisDto doctorDto = appointmentDto.getDoctor();
-                    if (doctorDto != null) {
-                        Doctor doctor = doctorRepository.findByNameIgnoreCase(doctorDto.getName())
-                                .orElseThrow(() -> new IllegalArgumentException("Doctor not found with name: " + doctorDto.getName()));
+                    if (doctorDto != null&& processedDoctors != null) {
+                        Doctor doctor = processedDoctors.stream()
+                                .filter(d -> d.getName().equalsIgnoreCase(doctorDto.getName()))
+                                .findFirst()
+                                .orElseThrow(() -> new IllegalArgumentException("Doctor not processed: " + doctorDto.getName()));
+
+//                                doctorRepository.findByNameIgnoreCase(doctorDto.getName())
+//                                .orElseThrow(() -> new IllegalArgumentException("Doctor not found with name: " + doctorDto.getName()));
                         existingAppointment.setDoctor(doctor);
                     }
                     existingAppointment.setAppointmentDateTime(appointmentDto.getAppointmentDateTime());
@@ -99,7 +111,7 @@ public class AppointmentService {
 
         String doctorName = extractedAppointment.getDoctorName();
 
-        if(!doctorName.isEmpty()){
+        if (doctorName != null && !doctorName.isEmpty()){
             Optional<Appointment> existingAppointmentOpt = findByDateTimeAndDoctorName(extractedAppointment.getAppointmentDateTime(),extractedAppointment.getDoctorName());
 
             DoctorAnalysisDto doctorDto = extractedDoctors.stream()
@@ -148,14 +160,6 @@ public class AppointmentService {
             appointmentAnalysisDto.setDoctor(null);
             appointmentAnalysisDto.setEntityStatus(EntityStatus.NEW);
         }
-
-
-
-
-
-
-
-
 
         return  appointmentAnalysisDto;
     }

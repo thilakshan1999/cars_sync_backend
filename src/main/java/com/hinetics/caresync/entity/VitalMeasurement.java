@@ -1,5 +1,6 @@
 package com.hinetics.caresync.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,5 +26,6 @@ public class VitalMeasurement {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vital_id")
+    @JsonBackReference
     private Vital vital;
 }
