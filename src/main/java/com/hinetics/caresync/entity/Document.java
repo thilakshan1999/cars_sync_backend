@@ -62,6 +62,9 @@ public class Document {
     )
     private List<Appointment> appointments = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     private LocalDateTime updatedTime;
 

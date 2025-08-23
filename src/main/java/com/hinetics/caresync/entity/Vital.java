@@ -32,6 +32,10 @@ public class Vital {
 
     private String unit;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     // One vital has many measurements (dateTime + value)
     @OneToMany(mappedBy = "vital", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VitalMeasurement> measurements = new ArrayList<>();
