@@ -6,6 +6,7 @@ import com.hinetics.caresync.dto.extracted.AppointmentExtractedDto;
 import com.hinetics.caresync.dto.extracted.DoctorExtractedDto;
 import com.hinetics.caresync.entity.Appointment;
 import com.hinetics.caresync.entity.Doctor;
+import com.hinetics.caresync.entity.User;
 import com.hinetics.caresync.enums.AppointmentType;
 import com.hinetics.caresync.enums.EntityStatus;
 import com.hinetics.caresync.enums.MedForm;
@@ -27,14 +28,19 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final DoctorRepository doctorRepository;
 
-    public Optional<Appointment> findByDateTimeAndDoctorName(LocalDateTime dateTime, String doctorName) {
-        if (dateTime == null || doctorName == null || doctorName.isBlank()) {
+    public Optional<Appointment> findByDateTimeAndDoctorNameAndUser(
+            LocalDateTime dateTime,
+            String doctorName,
+            User user
+    ) {
+        if (dateTime == null || doctorName == null || doctorName.isBlank() || user == null) {
             return Optional.empty();
         }
-        return appointmentRepository.findByDateTimeAndDoctorName(dateTime, doctorName);
+        return appointmentRepository.findByDateTimeAndDoctorNameAndUser(dateTime, doctorName, user);
     }
 
-    public List<Appointment> processAppointment(List<AppointmentAnalysisDto> dtoList, List<Doctor> processedDoctors) {
+
+    public List<Appointment> processAppointment(List<AppointmentAnalysisDto> dtoList, List<Doctor> processedDoctors,User user) {
         List<Appointment> appointments = new ArrayList<>();
 
         for (AppointmentAnalysisDto appointmentDto : dtoList) {
@@ -42,6 +48,7 @@ public class AppointmentService {
                 Appointment appointment = new Appointment();
                 appointment.setName(appointmentDto.getName());
                 appointment.setType(appointmentDto.getType());
+                appointment.setUser(user);
                 // Assuming you have doctor entity to set
                 DoctorAnalysisDto doctorDto = appointmentDto.getDoctor();
                  if (doctorDto!=null&& processedDoctors != null){
@@ -61,8 +68,11 @@ public class AppointmentService {
 
             } else if (appointmentDto.getEntityStatus() == EntityStatus.UPDATED) {
                 if (appointmentDto.getId() != null) {
-                    Appointment existingAppointment = appointmentRepository.findById(appointmentDto.getId())
-                            .orElseThrow(() -> new IllegalArgumentException("Appointment not found with id: " + appointmentDto.getId()));
+                    Appointment existingAppointment = appointmentRepository
+                            .findByIdAndUser(appointmentDto.getId(), user) // only for this user
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Appointment not found with id: " + appointmentDto.getId() + " for this user"
+                            ));
 
                     existingAppointment.setName(appointmentDto.getName());
                     existingAppointment.setType(appointmentDto.getType());
@@ -84,8 +94,11 @@ public class AppointmentService {
                 }
             } else if (appointmentDto.getEntityStatus() == EntityStatus.SAME) {
                 if (appointmentDto.getId() != null) {
-                    Appointment existingAppointment = appointmentRepository.findById(appointmentDto.getId())
-                            .orElseThrow(() -> new IllegalArgumentException("Appointment not found with id: " + appointmentDto.getId()));
+                    Appointment existingAppointment = appointmentRepository
+                            .findByIdAndUser(appointmentDto.getId(), user) // only for this user
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Appointment not found with id: " + appointmentDto.getId() + " for this user"
+                            ));
                     appointments.add(existingAppointment);
                 }
             }
@@ -94,14 +107,14 @@ public class AppointmentService {
         return appointments;
     }
 
-    public List<AppointmentAnalysisDto> mapAll(List<AppointmentExtractedDto> extractedAppointments,List<DoctorAnalysisDto> extractedDoctors) {
+    public List<AppointmentAnalysisDto> mapAll(List<AppointmentExtractedDto> extractedAppointments, List<DoctorAnalysisDto> extractedDoctors, User user) {
         return extractedAppointments.stream()
-                .map(dto -> mapToAppointmentAnalysisDto(dto, extractedDoctors))
+                .map(dto -> mapToAppointmentAnalysisDto(dto, extractedDoctors,user))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
-    private AppointmentAnalysisDto mapToAppointmentAnalysisDto(AppointmentExtractedDto extractedAppointment,List<DoctorAnalysisDto> extractedDoctors){
+    private AppointmentAnalysisDto mapToAppointmentAnalysisDto(AppointmentExtractedDto extractedAppointment,List<DoctorAnalysisDto> extractedDoctors,User user){
         if (extractedAppointment.getAppointmentDateTime() == null  ) {
             return null;
         }
@@ -112,7 +125,7 @@ public class AppointmentService {
         String doctorName = extractedAppointment.getDoctorName();
 
         if (doctorName != null && !doctorName.isEmpty()){
-            Optional<Appointment> existingAppointmentOpt = findByDateTimeAndDoctorName(extractedAppointment.getAppointmentDateTime(),extractedAppointment.getDoctorName());
+            Optional<Appointment> existingAppointmentOpt = findByDateTimeAndDoctorNameAndUser(extractedAppointment.getAppointmentDateTime(),extractedAppointment.getDoctorName(),user);
 
             DoctorAnalysisDto doctorDto = extractedDoctors.stream()
                     .filter(doc -> doc.getName() != null &&

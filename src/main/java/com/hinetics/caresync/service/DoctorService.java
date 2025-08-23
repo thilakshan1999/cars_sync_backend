@@ -3,6 +3,7 @@ package com.hinetics.caresync.service;
 import com.hinetics.caresync.dto.analysed.DoctorAnalysisDto;
 import com.hinetics.caresync.dto.extracted.DoctorExtractedDto;
 import com.hinetics.caresync.entity.Doctor;
+import com.hinetics.caresync.entity.User;
 import com.hinetics.caresync.enums.EntityStatus;
 import com.hinetics.caresync.repository.DoctorRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +20,11 @@ import java.util.stream.Collectors;
 public class DoctorService {
     private final DoctorRepository doctorRepository;
 
-    public Optional<Doctor> findByName(String doctorName) {
-        return doctorRepository.findByNameIgnoreCase(doctorName);
+    public Optional<Doctor> findByNameAndUser(String doctorName, User user) {
+        return doctorRepository.findByNameIgnoreCaseAndUser(doctorName, user);
     }
 
-    public List<Doctor> processDoctors(List<DoctorAnalysisDto> dtoList) {
+    public List<Doctor> processDoctors(List<DoctorAnalysisDto> dtoList,User user) {
         List<Doctor> doctors = new ArrayList<>();
 
         for (DoctorAnalysisDto doctorDto : dtoList) {
@@ -34,12 +35,13 @@ public class DoctorService {
                 newDoctor.setPhoneNumber(doctorDto.getPhoneNumber());
                 newDoctor.setEmail(doctorDto.getEmail());
                 newDoctor.setAddress(doctorDto.getAddress());
+                newDoctor.setUser(user);
                 doctors.add(newDoctor);
 
             } else if (doctorDto.getEntityStatus() == EntityStatus.UPDATED) {
                 if (doctorDto.getId() != null) {
-                    Doctor existingDoctor = doctorRepository.findById(doctorDto.getId())
-                            .orElseThrow(() -> new IllegalArgumentException("Doctor not found with id: " + doctorDto.getId()));
+                    Doctor existingDoctor = doctorRepository.findByIdAndUser(doctorDto.getId(),user)
+                            .orElseThrow(() -> new IllegalArgumentException("Doctor not found with id: " + doctorDto.getId()+" for this user"));
                     existingDoctor.setName(doctorDto.getName());
                     existingDoctor.setSpecialization(doctorDto.getSpecialization());
                     existingDoctor.setPhoneNumber(doctorDto.getPhoneNumber());
@@ -50,8 +52,8 @@ public class DoctorService {
 
             } else if (doctorDto.getEntityStatus() == EntityStatus.SAME) {
                 if (doctorDto.getId() != null) {
-                    Doctor existingDoctor = doctorRepository.findById(doctorDto.getId())
-                            .orElseThrow(() -> new IllegalArgumentException("Doctor not found with id: " + doctorDto.getId()));
+                    Doctor existingDoctor = doctorRepository.findByIdAndUser(doctorDto.getId(),user)
+                            .orElseThrow(() -> new IllegalArgumentException("Doctor not found with id: " + doctorDto.getId()+" for this user"));
                     doctors.add(existingDoctor);
                 }
             }
@@ -59,19 +61,19 @@ public class DoctorService {
         return doctors;
     }
 
-    public List<DoctorAnalysisDto> mapAll(List<DoctorExtractedDto> extractedDoctors) {
+    public List<DoctorAnalysisDto> mapAll(List<DoctorExtractedDto> extractedDoctors, User user) {
         return extractedDoctors.stream()
-                .map(this::mapToDoctorAnalysisDto)
+                .map(dto -> mapToDoctorAnalysisDto(dto, user))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
-    private DoctorAnalysisDto mapToDoctorAnalysisDto(DoctorExtractedDto extractedDoctor) {
+    private DoctorAnalysisDto mapToDoctorAnalysisDto(DoctorExtractedDto extractedDoctor,User user) {
         if (extractedDoctor.getName() == null || extractedDoctor.getName().isEmpty()) {
             return null;
         }
 
-        Optional<Doctor> existingDoctorOpt = findByName(extractedDoctor.getName());
+        Optional<Doctor> existingDoctorOpt = findByNameAndUser(extractedDoctor.getName(),user);
 
         DoctorAnalysisDto doctorDto = new DoctorAnalysisDto();
         doctorDto.setName(extractedDoctor.getName());

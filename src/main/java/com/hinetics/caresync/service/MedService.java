@@ -6,6 +6,7 @@ import com.hinetics.caresync.dto.analysed.MedAnalysisDto;
 import com.hinetics.caresync.dto.extracted.MedExtractedDto;
 import com.hinetics.caresync.entity.Doctor;
 import com.hinetics.caresync.entity.Med;
+import com.hinetics.caresync.entity.User;
 import com.hinetics.caresync.enums.EntityStatus;
 import com.hinetics.caresync.enums.IntakeInstruction;
 import com.hinetics.caresync.enums.MedForm;
@@ -27,9 +28,9 @@ import java.util.stream.Collectors;
 public class MedService {
     private final MedRepository medRepository;
 
-    public Optional<Med> fineByName(String medName){return medRepository.findByNameIgnoreCase(medName);}
+    public Optional<Med> findByNameAndUser(String medName,User user){return medRepository.findByNameIgnoreCaseAndUser(medName,user);}
 
-    public List<Med> processMeds(List<MedAnalysisDto> dtoList) {
+    public List<Med> processMeds(List<MedAnalysisDto> dtoList,User user) {
         List<Med> meds = new ArrayList<>();
 
         for (MedAnalysisDto medDto : dtoList) {
@@ -45,12 +46,15 @@ public class MedService {
                 med.setInstruction(medDto.getInstruction());
                 med.setStock(med.getStock());
                 med.setReminderLimit(med.getReminderLimit());
+                med.setUser(user);
 
                 meds.add(med);
             } else if (medDto.getEntityStatus() == EntityStatus.UPDATED) {
                 if (medDto.getId() != null) {
-                    Med existingMed = medRepository.findById(medDto.getId())
-                            .orElseThrow(() -> new IllegalArgumentException("Med not found with id: " + medDto.getId()));
+                    Med existingMed = medRepository.findByIdAndUser(medDto.getId(), user)
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Med not found with id: " + medDto.getId() + " for this user"
+                            ));
 
                     existingMed.setName(medDto.getName());
                     existingMed.setMedForm(medDto.getMedForm());
@@ -67,8 +71,10 @@ public class MedService {
                 }
             } else if (medDto.getEntityStatus() == EntityStatus.SAME) {
                 if (medDto.getId() != null) {
-                    Med existingMed = medRepository.findById(medDto.getId())
-                            .orElseThrow(() -> new IllegalArgumentException("Med not found with id: " + medDto.getId()));
+                    Med existingMed = medRepository.findByIdAndUser(medDto.getId(), user)
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Med not found with id: " + medDto.getId() + " for this user"
+                            ));
                     meds.add(existingMed);
                 }
             }
@@ -78,19 +84,19 @@ public class MedService {
         return  meds;
     }
 
-    public List<MedAnalysisDto> mapAll(List<MedExtractedDto> extractedMeds) {
+    public List<MedAnalysisDto> mapAll(List<MedExtractedDto> extractedMeds, User user) {
         return extractedMeds.stream()
-                .map(this::mapToMedAnalysisDto)
+                .map(dto -> mapToMedAnalysisDto(dto, user))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
-    private MedAnalysisDto mapToMedAnalysisDto(MedExtractedDto extractedMed) {
+    private MedAnalysisDto mapToMedAnalysisDto(MedExtractedDto extractedMed,User user) {
         if (extractedMed.getMedName() == null || extractedMed.getMedName().isEmpty()) {
             return null;
         }
 
-        Optional<Med> existingMedOpt = fineByName(extractedMed.getMedName());
+        Optional<Med> existingMedOpt = findByNameAndUser(extractedMed.getMedName(),user);
 
         MedAnalysisDto medDto = new MedAnalysisDto();
         medDto.setName(extractedMed.getMedName());

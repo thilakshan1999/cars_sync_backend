@@ -4,11 +4,13 @@ import com.hinetics.caresync.dto.ApiResponse;
 import com.hinetics.caresync.dto.DocumentSummaryDto;
 import com.hinetics.caresync.dto.analysed.DocumentAnalysisDto;
 import com.hinetics.caresync.entity.Document;
+import com.hinetics.caresync.entity.User;
 import com.hinetics.caresync.service.DocumentService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,10 +23,10 @@ public class DocumentController {
     private final DocumentService documentService;
 
     @PostMapping("/analyze")
-    public ResponseEntity<ApiResponse<DocumentAnalysisDto>> analyzeDocument(@RequestBody Map<String, String> body) {
+    public ResponseEntity<ApiResponse<DocumentAnalysisDto>> analyzeDocument(@RequestBody Map<String, String> body,@AuthenticationPrincipal User user) {
         try {
             String prompt = body.get("prompt");
-            DocumentAnalysisDto dto = documentService.analyzeDocument(prompt);
+            DocumentAnalysisDto dto = documentService.analyzeDocument(prompt,user);
             return ResponseEntity.ok(new ApiResponse<>(true, "Success", dto));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -33,9 +35,9 @@ public class DocumentController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteDocument(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteDocument(@PathVariable Long id,@AuthenticationPrincipal User user) {
         try {
-            documentService.deleteDocumentById(id);
+            documentService.deleteDocumentById(id,user);
             return ResponseEntity.ok(new ApiResponse<>(true, "Document deleted successfully", null));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -47,9 +49,9 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Document>> getDocumentById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Document>> getDocumentById(@PathVariable Long id,@AuthenticationPrincipal User user) {
         try {
-            Document document = documentService.getDocumentById(id);
+            Document document = documentService.getDocumentById(id,user);
             return ResponseEntity.ok(new ApiResponse<>(true, "Document fetched successfully", document));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -62,10 +64,10 @@ public class DocumentController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<DocumentSummaryDto>>> getAllDocumentsSummary(
-            @RequestParam(value = "type", required = false) String type
+            @RequestParam(value = "type", required = false) String type ,@AuthenticationPrincipal User user
     ) {
         try {
-            List<DocumentSummaryDto> summaries = documentService.getAllDocumentsSummary(type);
+            List<DocumentSummaryDto> summaries = documentService.getAllDocumentsSummary(type,user);
             return ResponseEntity.ok(new ApiResponse<>(true, "Documents fetched successfully", summaries));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -73,11 +75,10 @@ public class DocumentController {
         }
     }
 
-
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> saveDocument(@RequestBody DocumentAnalysisDto dto) {
+    public ResponseEntity<ApiResponse<Void>> saveDocument(@RequestBody DocumentAnalysisDto dto,@AuthenticationPrincipal User user) {
         try {
-            documentService.saveFromDto(dto);
+            documentService.saveFromDto(dto,user);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(true, "Document saved successfully", null));
         } catch (Exception e) {
@@ -85,6 +86,4 @@ public class DocumentController {
                     .body(new ApiResponse<>(false, "Error saving document: " + e.getMessage(), null));
         }
     }
-
-
 }

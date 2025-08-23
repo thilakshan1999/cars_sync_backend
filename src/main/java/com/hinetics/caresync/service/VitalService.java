@@ -6,6 +6,7 @@ import com.hinetics.caresync.dto.analysed.DoctorAnalysisDto;
 import com.hinetics.caresync.dto.analysed.VitalAnalysisDto;
 import com.hinetics.caresync.dto.extracted.VitalExtractedDto;
 import com.hinetics.caresync.entity.Doctor;
+import com.hinetics.caresync.entity.User;
 import com.hinetics.caresync.entity.Vital;
 import com.hinetics.caresync.entity.VitalMeasurement;
 import com.hinetics.caresync.enums.EntityStatus;
@@ -22,11 +23,12 @@ import java.util.stream.Collectors;
 public class VitalService {
     private final VitalRepository vitalRepository;
 
-    public Optional<Vital> findByName(String vitalName) {
-        return vitalRepository.findByNameIgnoreCase(vitalName);
+
+    public Optional<Vital> findByNameAndUser(String vitalName,User user) {
+        return vitalRepository.findByNameIgnoreCaseAndUser(vitalName,user);
     }
 
-    public List<Vital> processVitals(List<VitalAnalysisDto> dtoList) {
+    public List<Vital> processVitals(List<VitalAnalysisDto> dtoList,User user) {
         List<Vital> vitals = new ArrayList<>();
 
         for (VitalAnalysisDto vitalDto : dtoList) {
@@ -36,6 +38,7 @@ public class VitalService {
                 vital.setRemindDuration(vitalDto.getRemindDuration());
                 vital.setStartDateTime(vitalDto.getStartDateTime());
                 vital.setUnit(vitalDto.getUnit());
+                vital.setUser(user);
 
                 List<VitalMeasurement> measurements = vitalDto.getMeasurements().stream()
                         .map(dto -> {
@@ -51,8 +54,8 @@ public class VitalService {
 
             } else if (vitalDto.getEntityStatus() == EntityStatus.UPDATED) {
                 if (vitalDto.getId() != null) {
-                    Vital existingVital = vitalRepository.findById(vitalDto.getId())
-                            .orElseThrow(() -> new IllegalArgumentException("Vital not found with id: " + vitalDto.getId()));
+                    Vital existingVital = vitalRepository.findByIdAndUser(vitalDto.getId(), user)
+                            .orElseThrow(() -> new IllegalArgumentException("Vital not found with id: " + vitalDto.getId()+" for this user"));
 
                     existingVital.setName(vitalDto.getName());
                     existingVital.setRemindDuration(vitalDto.getRemindDuration());
@@ -74,8 +77,8 @@ public class VitalService {
                 }
             } else if (vitalDto.getEntityStatus() == EntityStatus.SAME) {
                 if (vitalDto.getId() != null) {
-                    Vital existingVital = vitalRepository.findById(vitalDto.getId())
-                            .orElseThrow(() -> new IllegalArgumentException("Vital not found with id: " + vitalDto.getId()));
+                    Vital existingVital = vitalRepository.findByIdAndUser(vitalDto.getId(), user)
+                            .orElseThrow(() -> new IllegalArgumentException("Vital not found with id: " + vitalDto.getId()+" for this user"));
                     vitals.add(existingVital);
                 }
             }
@@ -84,21 +87,21 @@ public class VitalService {
         return  vitals;
     }
 
-    public List<VitalAnalysisDto> mapAll(List<VitalExtractedDto> extractedVitals) {
+    public List<VitalAnalysisDto> mapAll(List<VitalExtractedDto> extractedVitals, User user) {
         if (extractedVitals == null) return Collections.emptyList();
 
         return extractedVitals.stream()
-                .map(this::mapToVitalAnalysisDTO)
+                .map(dto -> mapToVitalAnalysisDTO(dto, user))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
-    public VitalAnalysisDto mapToVitalAnalysisDTO(VitalExtractedDto extractedVital) {
+    public VitalAnalysisDto mapToVitalAnalysisDTO(VitalExtractedDto extractedVital,User user) {
         if (extractedVital.getName() == null || extractedVital.getName().isEmpty()) {
             return null;
         }
 
-        Optional<Vital> existingVitalOpt = findByName(extractedVital.getName());
+        Optional<Vital> existingVitalOpt = findByNameAndUser(extractedVital.getName(),user);
 
         VitalAnalysisDto vitalDTO = new VitalAnalysisDto();
         vitalDTO.setName(extractedVital.getName());

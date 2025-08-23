@@ -25,24 +25,27 @@ public class DocumentService {
     private final MedService medService;
     private final AppointmentService appointmentService;
 
-    public void deleteDocumentById(Long id) {
-        documentRepository.deleteById(id);
+    public void deleteDocumentById(Long id, User user) {
+        Document doc = documentRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Document not found with id: " + id + " for this user"));
+        documentRepository.delete(doc);
     }
 
-    public Document getDocumentById(Long id) {
-        return documentRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Document not found with id: " + id));
+    public Document getDocumentById(Long id, User user) {
+        return documentRepository.findByIdAndUser(id,user)
+                .orElseThrow(() -> new EntityNotFoundException("Document not found with id: " + id+" for this user"));
     }
 
-    public List<DocumentSummaryDto> getAllDocumentsSummary(String type) {
+    public List<DocumentSummaryDto> getAllDocumentsSummary(String type,User user) {
         List<Document> documents ;
 
         if (type == null || type.trim().isEmpty() || type.equalsIgnoreCase("All")) {
-            documents = documentRepository.findAll();
+            documents = documentRepository.findByUser(user);
         }else {
             try {
                 DocumentType docType = DocumentType.fromString(type);
-                documents = documentRepository.findByDocumentType(docType);
+                documents =  documentRepository.findByUserAndDocumentType(user, docType);
             } catch (IllegalArgumentException ex) {
                 // fallback: if invalid type provided, return empty list (or all if you prefer)
                 documents = Collections.emptyList();
@@ -61,7 +64,7 @@ public class DocumentService {
                 .collect(Collectors.toList());
     }
 
-    public DocumentAnalysisDto analyzeDocument(String documentContent) throws Exception {
+    public DocumentAnalysisDto analyzeDocument(String documentContent,User user) throws Exception {
         DocumentExtractedDto result = geminiService.generateText(documentContent);
 
         if (result == null) {
@@ -73,52 +76,53 @@ public class DocumentService {
         dto.setDocumentType(result.getDocumentType());
         dto.setSummary(result.getSummary());
 
-        List<DoctorAnalysisDto> doctors = doctorService.mapAll(result.getDoctors());
+        List<DoctorAnalysisDto> doctors = doctorService.mapAll(result.getDoctors(),user);
         dto.setDoctors(doctors);
 
-        List<VitalAnalysisDto> vitals = vitalService.mapAll(result.getVitals());
+        List<VitalAnalysisDto> vitals = vitalService.mapAll(result.getVitals(),user);
         dto.setVitals(vitals);
 
-        List<MedAnalysisDto> meds = medService.mapAll(result.getMedicines());
+        List<MedAnalysisDto> meds = medService.mapAll(result.getMedicines(),user);
         dto.setMeds(meds);
 
-        List<AppointmentAnalysisDto> appointments = appointmentService.mapAll(result.getAppointments(),doctors);
+        List<AppointmentAnalysisDto> appointments = appointmentService.mapAll(result.getAppointments(),doctors,user);
         dto.setAppointments(appointments);
 
         return dto;
     }
 
-    public Document saveFromDto(DocumentAnalysisDto dto) {
+    public void saveFromDto(DocumentAnalysisDto dto,User user) {
         Document entity = new Document();
         entity.setDocumentName(dto.getDocumentName());
         entity.setDocumentType(dto.getDocumentType());
         entity.setSummary(dto.getSummary());
+        entity.setUser(user);
 
         // Map Doctors
         if (dto.getDoctors() != null) {
-            List<Doctor> doctors = doctorService.processDoctors(dto.getDoctors());
+            List<Doctor> doctors = doctorService.processDoctors(dto.getDoctors(),user);
             entity.setDoctors(doctors);
         }
 
         // Map Vitals
         if (dto.getVitals() != null) {
-            List<Vital> vitals = vitalService.processVitals(dto.getVitals());
+            List<Vital> vitals = vitalService.processVitals(dto.getVitals(),user);
             entity.setVitals(vitals);
         }
 
         // Map Meds
         if (dto.getMeds() != null) {
-            List<Med> meds = medService.processMeds(dto.getMeds());
+            List<Med> meds = medService.processMeds(dto.getMeds(),user);
             entity.setMedicines(meds);
         }
 
         //Mad Appointment
         if (dto.getAppointments() != null) {
-            List<Appointment> appointments = appointmentService.processAppointment(dto.getAppointments(),entity.getDoctors());
+            List<Appointment> appointments = appointmentService.processAppointment(dto.getAppointments(),entity.getDoctors(),user);
             entity.setAppointments(appointments);
         }
 
-        return documentRepository.save(entity);
+        documentRepository.save(entity);
     }
 }
 
