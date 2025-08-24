@@ -1,5 +1,6 @@
 package com.hinetics.caresync.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.hinetics.caresync.enums.AppointmentType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -33,5 +34,6 @@ public class Appointment {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
     private User user;
 }

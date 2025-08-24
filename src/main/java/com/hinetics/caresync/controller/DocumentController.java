@@ -23,10 +23,10 @@ public class DocumentController {
     private final DocumentService documentService;
 
     @PostMapping("/analyze")
-    public ResponseEntity<ApiResponse<DocumentAnalysisDto>> analyzeDocument(@RequestBody Map<String, String> body,@AuthenticationPrincipal User user) {
+    public ResponseEntity<ApiResponse<DocumentAnalysisDto>> analyzeDocument(@RequestBody Map<String, String> body,@AuthenticationPrincipal String email) {
         try {
             String prompt = body.get("prompt");
-            DocumentAnalysisDto dto = documentService.analyzeDocument(prompt,user);
+            DocumentAnalysisDto dto = documentService.analyzeDocument(prompt,email);
             return ResponseEntity.ok(new ApiResponse<>(true, "Success", dto));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -35,9 +35,9 @@ public class DocumentController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteDocument(@PathVariable Long id,@AuthenticationPrincipal User user) {
+    public ResponseEntity<ApiResponse<Void>> deleteDocument(@PathVariable Long id,@AuthenticationPrincipal String email) {
         try {
-            documentService.deleteDocumentById(id,user);
+            documentService.deleteDocumentById(id,email);
             return ResponseEntity.ok(new ApiResponse<>(true, "Document deleted successfully", null));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -49,9 +49,9 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Document>> getDocumentById(@PathVariable Long id,@AuthenticationPrincipal User user) {
+    public ResponseEntity<ApiResponse<Document>> getDocumentById(@PathVariable Long id,@AuthenticationPrincipal String email) {
         try {
-            Document document = documentService.getDocumentById(id,user);
+            Document document = documentService.getDocumentById(id,email);
             return ResponseEntity.ok(new ApiResponse<>(true, "Document fetched successfully", document));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -64,10 +64,10 @@ public class DocumentController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<DocumentSummaryDto>>> getAllDocumentsSummary(
-            @RequestParam(value = "type", required = false) String type ,@AuthenticationPrincipal User user
+            @RequestParam(value = "type", required = false) String type ,@AuthenticationPrincipal String email
     ) {
         try {
-            List<DocumentSummaryDto> summaries = documentService.getAllDocumentsSummary(type,user);
+            List<DocumentSummaryDto> summaries = documentService.getAllDocumentsSummary(type,email);
             return ResponseEntity.ok(new ApiResponse<>(true, "Documents fetched successfully", summaries));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -76,9 +76,9 @@ public class DocumentController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> saveDocument(@RequestBody DocumentAnalysisDto dto,@AuthenticationPrincipal User user) {
+    public ResponseEntity<ApiResponse<Void>> saveDocument(@RequestBody DocumentAnalysisDto dto,@AuthenticationPrincipal String email) {
         try {
-            documentService.saveFromDto(dto,user);
+            documentService.saveFromDto(dto,email);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(true, "Document saved successfully", null));
         } catch (Exception e) {

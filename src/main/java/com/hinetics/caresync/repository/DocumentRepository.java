@@ -11,6 +11,6 @@ import java.util.Optional;
 public interface DocumentRepository extends JpaRepository<Document,Long> {
     List<Document> findByUser(User user);
     List<Document> findByUserAndDocumentType(User user, DocumentType documentType);
-    Optional<Document> findByIdAndUser(Long id, User user);
+    Optional<Document> findByIdAndUserEmail(Long id, String email);
 
 }

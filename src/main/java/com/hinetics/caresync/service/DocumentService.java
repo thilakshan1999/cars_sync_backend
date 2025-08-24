@@ -6,6 +6,7 @@ import com.hinetics.caresync.dto.extracted.DocumentExtractedDto;
 import com.hinetics.caresync.entity.*;
 import com.hinetics.caresync.enums.DocumentType;
 import com.hinetics.caresync.repository.DocumentRepository;
+import com.hinetics.caresync.repository.UserRepository;
 import com.hinetics.caresync.service.ai.GeminiService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -19,26 +20,30 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DocumentService {
     private final DocumentRepository documentRepository;
+    private final UserRepository userRepository;
     private final GeminiService geminiService;
     private final DoctorService doctorService;
     private final VitalService vitalService;
     private final MedService medService;
     private final AppointmentService appointmentService;
 
-    public void deleteDocumentById(Long id, User user) {
-        Document doc = documentRepository.findByIdAndUser(id, user)
+    public void deleteDocumentById(Long id, String email) {
+        Document doc = documentRepository.findByIdAndUserEmail(id, email)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Document not found with id: " + id + " for this user"));
         documentRepository.delete(doc);
     }
 
-    public Document getDocumentById(Long id, User user) {
-        return documentRepository.findByIdAndUser(id,user)
+    public Document getDocumentById(Long id, String email) {
+        return documentRepository.findByIdAndUserEmail(id,email)
                 .orElseThrow(() -> new EntityNotFoundException("Document not found with id: " + id+" for this user"));
     }
 
-    public List<DocumentSummaryDto> getAllDocumentsSummary(String type,User user) {
+    public List<DocumentSummaryDto> getAllDocumentsSummary(String type,String email) {
         List<Document> documents ;
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (type == null || type.trim().isEmpty() || type.equalsIgnoreCase("All")) {
             documents = documentRepository.findByUser(user);
@@ -64,7 +69,10 @@ public class DocumentService {
                 .collect(Collectors.toList());
     }
 
-    public DocumentAnalysisDto analyzeDocument(String documentContent,User user) throws Exception {
+    public DocumentAnalysisDto analyzeDocument(String documentContent,String email) throws Exception {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         DocumentExtractedDto result = geminiService.generateText(documentContent);
 
         if (result == null) {
@@ -91,7 +99,10 @@ public class DocumentService {
         return dto;
     }
 
-    public void saveFromDto(DocumentAnalysisDto dto,User user) {
+    public void saveFromDto(DocumentAnalysisDto dto,String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         Document entity = new Document();
         entity.setDocumentName(dto.getDocumentName());
         entity.setDocumentType(dto.getDocumentType());

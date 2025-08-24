@@ -1,5 +1,6 @@
 package com.hinetics.caresync.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.hinetics.caresync.enums.DocumentType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -64,6 +65,7 @@ public class Document {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
     private User user;
 
     private LocalDateTime updatedTime;

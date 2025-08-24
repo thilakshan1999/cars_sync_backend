@@ -1,5 +1,6 @@
 package com.hinetics.caresync.security;
 
+import com.hinetics.caresync.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +19,8 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtTokenUtil jwtTokenUtil;
 
-    public JwtAuthFilter(JwtTokenUtil jwtTokenUtil) {
+
+    public JwtAuthFilter(JwtTokenUtil jwtTokenUtil, UserRepository userRepository) {
         this.jwtTokenUtil = jwtTokenUtil;
     }
 

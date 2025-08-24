@@ -18,8 +18,10 @@ public enum MedForm {
 
     @JsonCreator
     public static MedForm fromString(String value) {
+        if (value == null) return OTHER;
+        String cleaned = value.replace("-", " ").replace("_", " ").trim();
         return Arrays.stream(MedForm.values())
-                .filter(f -> f.name().equalsIgnoreCase(value.replace(" ", "_")))
+                .filter(f -> f.name().replace("_", " ").equalsIgnoreCase(cleaned))
                 .findFirst()
                 .orElse(OTHER);
     }

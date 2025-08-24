@@ -1,5 +1,6 @@
 package com.hinetics.caresync.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.hinetics.caresync.enums.IntakeInstruction;
 import com.hinetics.caresync.enums.MedForm;
 import jakarta.persistence.*;
@@ -48,6 +49,7 @@ public class Med {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
     private User user;
 
 }

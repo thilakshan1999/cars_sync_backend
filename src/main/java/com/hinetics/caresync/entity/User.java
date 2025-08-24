@@ -1,5 +1,7 @@
 package com.hinetics.caresync.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.hinetics.caresync.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -37,45 +39,26 @@ public class User {
     private String refreshToken;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Document> documents = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Appointment> appointments = new ArrayList<>();
 
     // 🔹 Medicines
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Med> medicines = new ArrayList<>();
 
     // 🔹 Vitals
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Vital> vitals = new ArrayList<>();
 
     // 🔹 Doctors
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Doctor> doctors = new ArrayList<>();
 
-    public void addDocument(Document document) {
-        documents.add(document);
-        document.setUser(this);
-    }
-
-    public void addAppointment(Appointment appointment) {
-        appointments.add(appointment);
-        appointment.setUser(this);
-    }
-
-    public void addMedicine(Med medicine) {
-        medicines.add(medicine);
-        medicine.setUser(this);
-    }
-
-    public void addVital(Vital vital) {
-        vitals.add(vital);
-        vital.setUser(this);
-    }
-
-    public void addDoctor(Doctor doctor) {
-        doctors.add(doctor);
-        doctor.setUser(this);
-    }
 }
