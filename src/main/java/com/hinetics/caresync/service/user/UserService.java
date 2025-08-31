@@ -1,8 +1,8 @@
-package com.hinetics.caresync.service;
+package com.hinetics.caresync.service.user;
 
 import com.hinetics.caresync.dto.AuthResponseDto;
-import com.hinetics.caresync.dto.LoginRequestDto;
-import com.hinetics.caresync.dto.UserRegistrationDto;
+import com.hinetics.caresync.dto.user.LoginRequestDto;
+import com.hinetics.caresync.dto.user.UserRegistrationDto;
 import com.hinetics.caresync.entity.User;
 import com.hinetics.caresync.repository.UserRepository;
 import com.hinetics.caresync.security.JwtTokenUtil;
@@ -70,5 +70,15 @@ public class UserService {
         String accessToken = jwtTokenUtil.generateToken(user.getEmail(), user.getName(), user.getRole().name());
 
         return new AuthResponseDto(accessToken, requestRefreshToken);
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+    }
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
     }
 }

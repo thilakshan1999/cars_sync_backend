@@ -1,4 +1,4 @@
-package com.hinetics.caresync.dto;
+package com.hinetics.caresync.dto.user;
 
 import com.hinetics.caresync.enums.UserRole;
 import lombok.AllArgsConstructor;

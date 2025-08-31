@@ -1,4 +1,4 @@
-package com.hinetics.caresync.dto;
+package com.hinetics.caresync.dto.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

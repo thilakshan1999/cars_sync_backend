@@ -23,10 +23,13 @@ public class DocumentController {
     private final DocumentService documentService;
 
     @PostMapping("/analyze")
-    public ResponseEntity<ApiResponse<DocumentAnalysisDto>> analyzeDocument(@RequestBody Map<String, String> body,@AuthenticationPrincipal String email) {
+    public ResponseEntity<ApiResponse<DocumentAnalysisDto>> analyzeDocument(
+            @RequestBody Map<String, String> body,
+            @RequestParam(value = "patientId", required = false) Long patientId,
+            @AuthenticationPrincipal String email) {
         try {
             String prompt = body.get("prompt");
-            DocumentAnalysisDto dto = documentService.analyzeDocument(prompt,email);
+            DocumentAnalysisDto dto = documentService.analyzeDocument(prompt,patientId,email);
             return ResponseEntity.ok(new ApiResponse<>(true, "Success", dto));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -64,10 +67,12 @@ public class DocumentController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<DocumentSummaryDto>>> getAllDocumentsSummary(
-            @RequestParam(value = "type", required = false) String type ,@AuthenticationPrincipal String email
+            @RequestParam(value = "type", required = false) String type ,
+            @RequestParam(value = "patientId", required = false) Long patientId,
+            @AuthenticationPrincipal String email
     ) {
         try {
-            List<DocumentSummaryDto> summaries = documentService.getAllDocumentsSummary(type,email);
+            List<DocumentSummaryDto> summaries = documentService.getAllDocumentsSummary(type,patientId,email);
             return ResponseEntity.ok(new ApiResponse<>(true, "Documents fetched successfully", summaries));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -76,9 +81,12 @@ public class DocumentController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> saveDocument(@RequestBody DocumentAnalysisDto dto,@AuthenticationPrincipal String email) {
+    public ResponseEntity<ApiResponse<Void>> saveDocument(
+            @RequestBody DocumentAnalysisDto dto,
+            @RequestParam(value = "patientId", required = false) Long patientId,
+            @AuthenticationPrincipal String email) {
         try {
-            documentService.saveFromDto(dto,email);
+            documentService.saveFromDto(dto,patientId,email);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(true, "Document saved successfully", null));
         } catch (Exception e) {

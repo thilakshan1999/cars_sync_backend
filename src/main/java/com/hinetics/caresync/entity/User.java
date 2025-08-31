@@ -61,4 +61,23 @@ public class User {
     @JsonManagedReference
     private List<Doctor> doctors = new ArrayList<>();
 
+    // 🔹 Caregiver relationships (if role = CAREGIVER)
+    @OneToMany(mappedBy = "caregiver", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<CareGiverAssignment> assignedPatients = new ArrayList<>();
+
+    // 🔹 Caregiver relationships (if role = PATIENT)
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<CareGiverAssignment> assignedCaregivers = new ArrayList<>();
+
+    // 🔹 Pending requests sent (for caregivers)
+    @OneToMany(mappedBy = "fromUser", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<CareGiverRequest> requestsSent  = new ArrayList<>();
+
+    // 🔹 Pending requests received (for patients)
+    @OneToMany(mappedBy = "toUser", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<CareGiverRequest> requestsReceived  = new ArrayList<>();
 }

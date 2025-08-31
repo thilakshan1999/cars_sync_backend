@@ -2,9 +2,9 @@ package com.hinetics.caresync.controller;
 
 import com.hinetics.caresync.dto.ApiResponse;
 import com.hinetics.caresync.dto.AuthResponseDto;
-import com.hinetics.caresync.dto.LoginRequestDto;
-import com.hinetics.caresync.dto.UserRegistrationDto;
-import com.hinetics.caresync.service.UserService;
+import com.hinetics.caresync.dto.user.LoginRequestDto;
+import com.hinetics.caresync.dto.user.UserRegistrationDto;
+import com.hinetics.caresync.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

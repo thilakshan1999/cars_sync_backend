@@ -1,6 +1,5 @@
 package com.hinetics.caresync.security;
 
-import com.hinetics.caresync.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,7 +10,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -20,7 +18,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtTokenUtil jwtTokenUtil;
 
 
-    public JwtAuthFilter(JwtTokenUtil jwtTokenUtil, UserRepository userRepository) {
+    public JwtAuthFilter(JwtTokenUtil jwtTokenUtil) {
         this.jwtTokenUtil = jwtTokenUtil;
     }
 
@@ -40,8 +38,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 // Set authority from role
                 List<SimpleGrantedAuthority> authorities = List.of(
-                        new SimpleGrantedAuthority(role)
+                        new SimpleGrantedAuthority("ROLE_" + role)
                 );
+                System.out.println("Authorities = " + authorities);
 
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(email, null, authorities);
