@@ -21,10 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -258,22 +255,43 @@ public class DocumentService {
             throw new EntityNotFoundException("No documents found for provided IDs");
         }
 
-        return documents.stream()
+        List<DocumentReferenceDto> result = documents.stream()
+                .filter(doc -> {
+                    // Skip if required fields are missing
+                    return doc.getFileName() != null && !doc.getFileName().isBlank()
+                            && doc.getFileType() != null && !doc.getFileType().isBlank();
+                })
                 .filter(doc -> {
                     try {
+                        // Skip if user cannot access the document
                         validateDocumentAccess(user, doc, false);
                         return true;
                     } catch (Exception e) {
-                        return false; // skip inaccessible docs
+                        return false;
                     }
                 })
-                .map(doc -> new DocumentReferenceDto(
-                        doc.getId(),
-                        doc.getFileName(),
-                        doc.getFileType(),
-                        fileStorageService.generateSignedUrl(doc.getFileName())
-                ))
+                .map(doc -> {
+                    try {
+                        String signedUrl = fileStorageService.generateSignedUrl(doc.getFileName());
+                        return new DocumentReferenceDto(
+                                doc.getId(),
+                                doc.getFileName(),
+                                doc.getFileType(),
+                                signedUrl
+                        );
+                    } catch (Exception e) {
+                        // Skip if signed URL generation fails
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull) // remove any failed mappings
                 .collect(Collectors.toList());
+
+        if (result.isEmpty()) {
+            throw new EntityNotFoundException("No valid documents found for the provided IDs");
+        }
+
+        return result;
     }
 
     private void updateFileInfo(Document entity, MultipartFile file) throws IOException {
