@@ -3,7 +3,11 @@ package com.hinetics.caresync.service.user;
 import com.hinetics.caresync.dto.AuthResponseDto;
 import com.hinetics.caresync.dto.user.LoginRequestDto;
 import com.hinetics.caresync.dto.user.UserRegistrationDto;
+import com.hinetics.caresync.dto.user.UserSummaryDto;
+import com.hinetics.caresync.entity.CareGiverAssignment;
 import com.hinetics.caresync.entity.User;
+import com.hinetics.caresync.enums.CareGiverPermission;
+import com.hinetics.caresync.enums.UserRole;
 import com.hinetics.caresync.repository.UserRepository;
 import com.hinetics.caresync.security.JwtTokenUtil;
 import com.hinetics.caresync.service.MailService;
@@ -13,7 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -155,4 +161,20 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public List<UserSummaryDto> getPatientsWithFullAccess(String email) {
+        User caregiver = getUserByEmail(email);
+
+        if (caregiver.getRole() != UserRole.CAREGIVER) {
+            throw new RuntimeException("User is not a caregiver");
+        }
+
+        List<CareGiverAssignment> fullAccessAssignments = caregiver.getAssignedPatients().stream()
+                .filter(assignment -> assignment.getPermission() == CareGiverPermission.FULL_ACCESS)
+                .toList();
+
+        return fullAccessAssignments.stream()
+                .map(CareGiverAssignment::getPatient) // get the patient User
+                .map(patient -> new UserSummaryDto(patient.getId(), patient.getEmail(),patient.getName(),patient.getRole()))
+                .collect(Collectors.toList());
+    }
 }

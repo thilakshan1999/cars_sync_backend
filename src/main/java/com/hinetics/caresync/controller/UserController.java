@@ -5,12 +5,14 @@ import com.hinetics.caresync.dto.AuthResponseDto;
 import com.hinetics.caresync.dto.user.LoginRequestDto;
 import com.hinetics.caresync.dto.user.ResetPasswordRequest;
 import com.hinetics.caresync.dto.user.UserRegistrationDto;
+import com.hinetics.caresync.dto.user.UserSummaryDto;
 import com.hinetics.caresync.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -95,6 +97,17 @@ public class UserController {
                     otp
             );
             return ResponseEntity.ok(new ApiResponse<>(true, "OTP verified", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(false, e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/patients/full-access")
+    public ResponseEntity<ApiResponse<List<UserSummaryDto>>> getPatientsWithFullAccess(@RequestParam String email) {
+        try {
+            List<UserSummaryDto> patientList = userService.getPatientsWithFullAccess(email);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Patient list fetched successfully", patientList));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(false, e.getMessage(), null));

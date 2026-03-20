@@ -239,18 +239,6 @@ public class GeminiService {
                 String.class
         );
 
-//        if (response.getStatusCode().is2xxSuccessful()) {
-//            JsonNode root = mapper.readTree(response.getBody());
-//            return root
-//                    .path("candidates").get(0)
-//                    .path("content")
-//                    .path("parts").get(0)
-//                    .path("text")
-//                    .asText();
-//        } else {
-//            throw new RuntimeException("Failed to call Gemini API: " + response.getStatusCode());
-//        }
-
         if (response.getStatusCode().is2xxSuccessful()) {
             JsonNode root = mapper.readTree(response.getBody());
             JsonNode candidates = root.path("candidates");

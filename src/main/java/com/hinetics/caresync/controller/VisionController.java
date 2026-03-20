@@ -2,9 +2,7 @@ package com.hinetics.caresync.controller;
 
 import com.hinetics.caresync.dto.ApiResponse;
 import com.hinetics.caresync.service.ai.CloudVisionService;
-import com.hinetics.caresync.service.ai.DocumentAIService;
 import com.hinetics.caresync.service.ai.GeminiService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
