@@ -1,0 +1,41 @@
+package com.hinetics.caresync.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(
+        name = "doctors",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"name", "user_id"}) // 👈 unique doctor name per user
+        }
+)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Doctor {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    private String specialization;
+
+    private String phoneNumber;
+
+    private String email;
+
+    private String address;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
+    private User user;
+
+}
