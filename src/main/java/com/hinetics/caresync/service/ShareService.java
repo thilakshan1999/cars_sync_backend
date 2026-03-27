@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 @Service
 @RequiredArgsConstructor
@@ -31,12 +32,17 @@ public class ShareService {
             throw new RuntimeException("Unable to determine file type");
         }
 
+        System.out.println();
+
         Path tempFile = null;
 
         try {
             // ✅ Create temp file
             tempFile = Files.createTempFile("upload-", fileName);
-            file.transferTo(tempFile.toFile());
+            Files.copy(file.getInputStream(), tempFile, StandardCopyOption.REPLACE_EXISTING);
+
+            System.out.println("Temp file path: " + tempFile);
+            System.out.println("Temp file size: " + Files.size(tempFile));
 
             // 📄 PDF
             if ("application/pdf".equals(mimeType)) {

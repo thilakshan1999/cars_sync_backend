@@ -10,6 +10,7 @@ import com.hinetics.caresync.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -104,7 +105,7 @@ public class UserController {
     }
 
     @GetMapping("/patients/full-access")
-    public ResponseEntity<ApiResponse<List<UserSummaryDto>>> getPatientsWithFullAccess(@RequestParam String email) {
+    public ResponseEntity<ApiResponse<List<UserSummaryDto>>> getPatientsWithFullAccess( @AuthenticationPrincipal String email) {
         try {
             List<UserSummaryDto> patientList = userService.getPatientsWithFullAccess(email);
             return ResponseEntity.ok(new ApiResponse<>(true, "Patient list fetched successfully", patientList));
