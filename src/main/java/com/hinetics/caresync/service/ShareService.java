@@ -1,72 +1,42 @@
 package com.hinetics.caresync.service;
 
-import com.hinetics.caresync.dto.analysed.DocumentAnalysisDto;
-import com.hinetics.caresync.service.ai.DocumentAIService;
-import com.hinetics.caresync.service.ai.GeminiService;
+import com.hinetics.caresync.dto.FileUploadResult;
+import com.hinetics.caresync.entity.UploadTask;
+import com.hinetics.caresync.entity.User;
+import com.hinetics.caresync.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-
 @Service
 @RequiredArgsConstructor
 public class ShareService {
-    private final GeminiService geminiService;
-    private final DocumentAIService documentAIService;
+    private final FileStorageService fileStorageService;
+    private final UploadTaskService uploadTaskService;
+    private final AsyncShareProcessor asyncShareProcessor;
+    private final UserService userService;
     private final DocumentService documentService;
 
-    public void saveDocumentViaShare(MultipartFile file, Long id, String email) throws Exception {
-        String extractedText=extractText(file);
-        DocumentAnalysisDto dto = documentService.analyzeDocument(extractedText,id,email);
-        documentService.saveFromDto(dto,file,id,email);
-    }
+    public void saveDocumentViaShare(MultipartFile file, Long patientId, String email) throws Exception {
 
-    private String extractText(MultipartFile file) {
-        String mimeType = file.getContentType();
-        String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "temp";
+        User user = userService.getUserByEmail(email);
+        User targetUser = documentService.resolveTargetUser(user,patientId,true);
 
-        if (mimeType == null) {
-            throw new RuntimeException("Unable to determine file type");
-        }
+        FileUploadResult uploadResult = fileStorageService.uploadFile(file);
 
-        System.out.println();
+        UploadTask task = uploadTaskService.createTask(
+                uploadResult.getFileName(),
+                uploadResult.getFileUrl(),
+                uploadResult.getFileType(),
+                targetUser.getId(),
+                user.getEmail()
+        );
 
-        Path tempFile = null;
-
-        try {
-            // ✅ Create temp file
-            tempFile = Files.createTempFile("upload-", fileName);
-            Files.copy(file.getInputStream(), tempFile, StandardCopyOption.REPLACE_EXISTING);
-
-            System.out.println("Temp file path: " + tempFile);
-            System.out.println("Temp file size: " + Files.size(tempFile));
-
-            // 📄 PDF
-            if ("application/pdf".equals(mimeType)) {
-                return documentAIService.extractText(tempFile, mimeType);
-            }
-
-            // 🖼 Image
-            else if (mimeType.startsWith("image/")) {
-                return geminiService.extractTextFromImage(tempFile);
-            }
-
-            else {
-                throw new RuntimeException("Unsupported file type: " + mimeType);
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to extract text: " + e.getMessage(), e);
-
-        } finally {
-            try {
-                if (tempFile != null) {
-                    Files.deleteIfExists(tempFile);
-                }
-            } catch (Exception ignored) {}
-        }
+        asyncShareProcessor.processDocumentAsync(
+                task.getId(),
+                uploadResult,
+                targetUser.getId(),
+                targetUser.getEmail()
+        );
     }
 }

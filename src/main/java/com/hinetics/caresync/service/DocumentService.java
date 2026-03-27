@@ -189,9 +189,15 @@ public class DocumentService {
         return dto;
     }
 
-    public void saveFromDto(DocumentAnalysisDto dto, MultipartFile file,Long patientId, String email) throws IOException {
-        User user = userService.getUserByEmail(email);
+    public void saveFromDto(
+            DocumentAnalysisDto dto,
+            MultipartFile multipartFile,        // nullable
+            FileUploadResult fileUploadResult,  // nullable
+            Long patientId,
+            String email
+    ) throws IOException {
 
+        User user = userService.getUserByEmail(email);
         User targetUser = resolveTargetUser(user, patientId, true);
 
         Document entity = new Document();
@@ -202,29 +208,31 @@ public class DocumentService {
         entity.setDateOfTest(dto.getDateOfTest());
         entity.setDateOfVisit(dto.getDateOfVisit());
 
-        updateFileInfo(entity, file);
+        // ✅ Handle file (only one will be present)
+        handleFile(entity, multipartFile, fileUploadResult);
 
-        // Map Doctors
+        // Doctors
         if (dto.getDoctors() != null) {
-            List<Doctor> doctors = doctorService.processDoctors(dto.getDoctors(),targetUser);
+            List<Doctor> doctors = doctorService.processDoctors(dto.getDoctors(), targetUser);
             entity.setDoctors(doctors);
         }
 
-        // Map Vitals
+        // Vitals
         if (dto.getVitals() != null) {
-            List<Vital> vitals = vitalService.processVitals(dto.getVitals(),targetUser);
+            List<Vital> vitals = vitalService.processVitals(dto.getVitals(), targetUser);
             entity.setVitals(vitals);
         }
 
-        // Map Meds
+        // Meds
         if (dto.getMeds() != null) {
-            List<Med> meds = medService.processMeds(dto.getMeds(),targetUser);
+            List<Med> meds = medService.processMeds(dto.getMeds(), targetUser);
             entity.setMedicines(meds);
         }
 
-        //Mad Appointment
+        // Appointments
         if (dto.getAppointments() != null) {
-            List<Appointment> appointments = appointmentService.processAppointment(dto.getAppointments(),entity.getDoctors(),user);
+            List<Appointment> appointments =
+                    appointmentService.processAppointment(dto.getAppointments(), entity.getDoctors(), user);
             entity.setAppointments(appointments);
         }
 
@@ -294,15 +302,31 @@ public class DocumentService {
         return result;
     }
 
-    private void updateFileInfo(Document entity, MultipartFile file) throws IOException {
-        if (file != null && !file.isEmpty()) {
-            // Upload file to Google Cloud Storage
-            FileUploadResult result = fileStorageService.uploadFile(file);
+    private void handleFile(
+            Document entity,
+            MultipartFile multipartFile,
+            FileUploadResult fileUploadResult
+    ) throws IOException {
 
-            // Update entity fields
-            entity.setFileUrl(result.getFileUrl());
+        // 🔹 Case 1: New upload (old flow)
+        if (multipartFile != null && !multipartFile.isEmpty()) {
+            FileUploadResult result = fileStorageService.uploadFile(multipartFile);
+
             entity.setFileName(result.getFileName());
+            entity.setFileUrl(result.getFileUrl());
             entity.setFileType(result.getFileType());
+        }
+
+        // 🔹 Case 2: Already uploaded (new async flow)
+        else if (fileUploadResult != null) {
+            entity.setFileName(fileUploadResult.getFileName());
+            entity.setFileUrl(fileUploadResult.getFileUrl());
+            entity.setFileType(fileUploadResult.getFileType());
+        }
+
+        // 🔹 Safety check
+        else {
+            throw new RuntimeException("No file provided");
         }
     }
 
@@ -331,7 +355,7 @@ public class DocumentService {
         }
     }
 
-    private User resolveTargetUser(User user, Long patientId,boolean requireFullAccess) {
+    public User resolveTargetUser(User user, Long patientId,boolean requireFullAccess) {
         if (user.getRole() == UserRole.CAREGIVER) {
             // delegate validation to CareGiverAssignmentService
             return careGiverAssignmentService.validateCaregiverAccess(
@@ -340,7 +364,6 @@ public class DocumentService {
                     requireFullAccess
             );
         }
-
         return user; // patient accessing own documents
     }
 }

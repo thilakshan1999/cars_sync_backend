@@ -24,14 +24,10 @@ public class ShareController {
     ) {
         try {
             shareService.saveDocumentViaShare(file, patientId, email);
-
-            return ResponseEntity.ok(
-                    new ApiResponse<>(true, "Document processed successfully", "")
-            );
-
+            return ResponseEntity.ok(new ApiResponse<>(true, "Processing started", null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "Processing failed: " + e.getMessage(), ""));
+                    .body(new ApiResponse<>(false, "Processing failed: " + e.getMessage(), null));
         }
     }
 }

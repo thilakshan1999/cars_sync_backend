@@ -109,7 +109,7 @@ public class DocumentController {
             @AuthenticationPrincipal String email
     ) {
         try {
-            documentService.saveFromDto(dto,file,patientId,email);
+            documentService.saveFromDto(dto,file,null,patientId,email);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(true, "Document saved successfully", null));
         } catch (Exception e) {
