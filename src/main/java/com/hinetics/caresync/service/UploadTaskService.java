@@ -72,7 +72,7 @@ public class UploadTaskService {
         if (!task.getPatientId().equals(targetUser.getId())) {
             throw new RuntimeException("Unauthorized access");
         }
-
+        task.setFileUrl(fileStorageService.generateSignedUrl(task.getFileUrl()));
         return task;
     }
 
@@ -80,7 +80,7 @@ public class UploadTaskService {
         User user = userService.getUserByEmail(email);
         User targetUser = documentService.resolveTargetUser(user, patientId, true);
 
-        return uploadTaskRepository.findByUserIdOrderByIdDesc(targetUser.getId());
+        return uploadTaskRepository.findByPatientIdOrderByIdDesc(targetUser.getId());
     }
 
     public void deleteTaskWithFile(Long taskId,Long patientId, String email) {

@@ -26,7 +26,7 @@ public class FileStorageService {
     private final String bucketName = "care-sync-bucket"; // your bucket name
 
     public FileUploadResult uploadFile(MultipartFile file) throws IOException {
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        String fileName = file.getOriginalFilename()+"_"+System.currentTimeMillis() ;
 
         String contentType = file.getContentType();
         if (contentType == null || contentType.equals("application/octet-stream")) {

@@ -7,6 +7,7 @@ import com.hinetics.caresync.dto.FileUploadResult;
 import com.hinetics.caresync.dto.analysed.DocumentAnalysisDto;
 import com.hinetics.caresync.service.ai.DocumentAIService;
 import com.hinetics.caresync.service.ai.GeminiService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class AsyncShareProcessor {
     private final GeminiService geminiService;
 
     @Async
+    @Transactional
     public void processDocumentAsync(
             Long taskId,
             FileUploadResult uploadResult,

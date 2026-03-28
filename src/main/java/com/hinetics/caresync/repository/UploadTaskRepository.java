@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface UploadTaskRepository extends JpaRepository<UploadTask, Long> {
-    List<UploadTask> findByUserIdOrderByIdDesc(Long userId);
+    List<UploadTask> findByPatientIdOrderByIdDesc(Long patientId);
 }
