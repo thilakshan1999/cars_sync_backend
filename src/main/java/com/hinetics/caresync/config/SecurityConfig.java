@@ -40,7 +40,8 @@ public class SecurityConfig {
                                 "/api/vision/extract",
                                 "/api/users/forgot-password",
                                 "/api/users/reset-password",
-                                "/api/users/verify-otp"
+                                "/api/users/verify-otp",
+                                "/api/mail/incoming"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

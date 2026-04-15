@@ -50,6 +50,15 @@ public class CareGiverAssignmentService {
                 .toList();
     }
 
+    public List<Long> getPatientIdsOfCaregiver(String email) {
+        User user = userService.getUserByEmail(email);
+
+        return assignmentRepository.findByCaregiverId(user.getId())
+                .stream()
+                .map(assignment -> assignment.getPatient().getId())
+                .toList();
+    }
+
     public void removeAssignment(Long assignmentId) {
         CareGiverAssignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new RuntimeException("Assignment not found"));
@@ -75,12 +84,14 @@ public class CareGiverAssignmentService {
                 new UserSummaryDto(
                         assignment.getCaregiver().getId(),
                         assignment.getCaregiver().getEmail(),
+                        assignment.getCaregiver().getSystemEmail(),
                         assignment.getCaregiver().getName(),
                         assignment.getCaregiver().getRole()
                 ),
                 new UserSummaryDto(
                         assignment.getPatient().getId(),
                         assignment.getPatient().getEmail(),
+                        assignment.getPatient().getSystemEmail(),
                         assignment.getPatient().getName(),
                         assignment.getPatient().getRole()
                 ),

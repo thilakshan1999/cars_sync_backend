@@ -120,12 +120,14 @@ public class CareGiverRequestService {
                 new UserSummaryDto(
                         request.getFromUser().getId(),
                         request.getFromUser().getEmail(),
+                        request.getFromUser().getSystemEmail(),
                         request.getFromUser().getName(),
                         request.getFromUser().getRole()
                 ),
                 new UserSummaryDto(
                         request.getToUser().getId(),
                         request.getToUser().getEmail(),
+                        request.getToUser().getSystemEmail(),
                         request.getToUser().getName(),
                         request.getToUser().getRole()
                 ),

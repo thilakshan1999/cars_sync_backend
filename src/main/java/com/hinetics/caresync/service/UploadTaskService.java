@@ -72,13 +72,14 @@ public class UploadTaskService {
         if (!task.getPatientId().equals(targetUser.getId())) {
             throw new RuntimeException("Unauthorized access");
         }
-        task.setFileUrl(fileStorageService.generateSignedUrl(task.getFileUrl()));
+        String fileUrl = fileStorageService.generateSignedUrl(task.getFileName());
+        task.setFileUrl(fileUrl);
         return task;
     }
 
     public List<UploadTask> getTasksByUser(Long patientId,String email) {
         User user = userService.getUserByEmail(email);
-        User targetUser = documentService.resolveTargetUser(user, patientId, true);
+        User targetUser = documentService.resolveTargetUser(user, patientId, false);
 
         return uploadTaskRepository.findByPatientIdOrderByIdDesc(targetUser.getId());
     }
@@ -190,7 +191,6 @@ public class UploadTaskService {
     }
 
     private String extractText(Path filePath, String mimeType) throws Exception {
-
         if ("application/pdf".equals(mimeType)) {
             return documentAIService.extractText(filePath, mimeType);
         } else if (mimeType != null && mimeType.startsWith("image/")) {

@@ -51,7 +51,14 @@ public class UserService {
         String refreshToken = UUID.randomUUID().toString();
         user.setRefreshToken(refreshToken);
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        if(savedUser.getRole()==UserRole.PATIENT){
+            String systemEmail = generateSystemEmail(savedUser.getName(), savedUser.getId());
+            savedUser.setSystemEmail(systemEmail);
+            //  Save again
+            userRepository.save(savedUser);
+        }
 
         String accessToken = jwtTokenUtil.generateToken(user.getEmail(), user.getName(), user.getRole().name());
 
@@ -84,6 +91,11 @@ public class UserService {
     public User getUserByEmail(String email) {
         return userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+    }
+
+    public User getUserBySystemEmail(String systemEmail) {
+        return userRepository.findBySystemEmailIgnoreCase(systemEmail)
+                .orElseThrow(() -> new RuntimeException("Invalid email address. Please check and try again."));
     }
 
     public User getUserById(Long id) {
@@ -174,7 +186,33 @@ public class UserService {
 
         return fullAccessAssignments.stream()
                 .map(CareGiverAssignment::getPatient) // get the patient User
-                .map(patient -> new UserSummaryDto(patient.getId(), patient.getEmail(),patient.getName(),patient.getRole()))
+                .map(patient -> new UserSummaryDto(patient.getId(), patient.getEmail(),patient.getSystemEmail(),patient.getName(),patient.getRole()))
                 .collect(Collectors.toList());
+    }
+
+    private String generateSystemEmail(String name, Long id) {
+
+        String cleanName;
+
+        if (name != null && !name.trim().isEmpty()) {
+
+            String[] parts = name.trim().split("\\s+");
+
+            if (parts.length == 1) {
+                cleanName = parts[0].toLowerCase();
+            } else {
+                String firstInitial = parts[0].substring(0, 1).toLowerCase();
+                String lastName = parts[parts.length - 1]
+                        .toLowerCase()
+                        .replaceAll("[^a-z0-9]", "");
+
+                cleanName = firstInitial + lastName;
+            }
+
+        } else {
+            cleanName = "user";
+        }
+
+        return cleanName + id + "@mg.hinetics.lk";
     }
 }

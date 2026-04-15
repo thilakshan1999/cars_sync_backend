@@ -12,17 +12,23 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ShareService {
+public class IncomingMailService {
     private final FileStorageService fileStorageService;
     private final UploadTaskService uploadTaskService;
     private final AsyncShareProcessor asyncShareProcessor;
     private final UserService userService;
-    private final DocumentService documentService;
 
-    public void saveDocumentViaShare(MultipartFile file, Long patientId, String email) throws Exception {
+    public void saveMultipleDocumentsViaMail(List<MultipartFile> files, String email) throws Exception {
+        User user = userService.getUserBySystemEmail(email);
 
-        User user = userService.getUserByEmail(email);
-        User targetUser = documentService.resolveTargetUser(user,patientId,true);
+        for (MultipartFile file : files) {
+            if (file != null && !file.isEmpty()) {
+                saveDocument(file, user);
+            }
+        }
+    }
+
+    public void saveDocument(MultipartFile file, User user) throws Exception {
 
         FileUploadResult uploadResult = fileStorageService.uploadFile(file);
 
@@ -30,16 +36,15 @@ public class ShareService {
                 uploadResult.getFileName(),
                 uploadResult.getFileUrl(),
                 uploadResult.getFileType(),
-                targetUser.getId(),
+                user.getId(),
                 user.getEmail()
         );
 
         asyncShareProcessor.processDocumentAsync(
                 task.getId(),
                 uploadResult,
-                targetUser.getId(),
-                targetUser.getEmail()
+                user.getId(),
+                user.getEmail()
         );
     }
-
 }

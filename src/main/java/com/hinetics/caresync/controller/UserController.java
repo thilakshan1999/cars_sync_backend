@@ -2,10 +2,7 @@ package com.hinetics.caresync.controller;
 
 import com.hinetics.caresync.dto.ApiResponse;
 import com.hinetics.caresync.dto.AuthResponseDto;
-import com.hinetics.caresync.dto.user.LoginRequestDto;
-import com.hinetics.caresync.dto.user.ResetPasswordRequest;
-import com.hinetics.caresync.dto.user.UserRegistrationDto;
-import com.hinetics.caresync.dto.user.UserSummaryDto;
+import com.hinetics.caresync.dto.user.*;
 import com.hinetics.caresync.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -130,4 +127,5 @@ public class UserController {
                     .body(new ApiResponse<>(false, e.getMessage(), null));
         }
     }
+
 }

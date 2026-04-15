@@ -33,13 +33,15 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(unique = true)
+    private String systemEmail;
+
     private String password;
 
     private LocalDate dateOfBirth;
 
     private String refreshToken;
 
-    // 👇 Add these fields
     private String otpHash;
     private LocalDateTime otpExpiry;
     private Integer  otpAttempts;
@@ -86,4 +88,5 @@ public class User {
     @OneToMany(mappedBy = "toUser", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<CareGiverRequest> requestsReceived  = new ArrayList<>();
+
 }

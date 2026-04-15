@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 public class UserSummaryDto {
     private Long id;
     private String email;
+    private String systemEmail;
     private String name;
     private UserRole role;
 }

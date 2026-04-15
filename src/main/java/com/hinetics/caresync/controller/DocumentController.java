@@ -3,17 +3,20 @@ package com.hinetics.caresync.controller;
 import com.hinetics.caresync.dto.ApiResponse;
 import com.hinetics.caresync.dto.DocumentReferenceDto;
 import com.hinetics.caresync.dto.DocumentSummaryDto;
+import com.hinetics.caresync.dto.DocumentSyncDto;
 import com.hinetics.caresync.dto.analysed.DocumentAnalysisDto;
 import com.hinetics.caresync.entity.Document;
 import com.hinetics.caresync.service.DocumentService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -81,6 +84,23 @@ public class DocumentController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(false, "Failed to fetch document", null));
+        }
+    }
+
+    @GetMapping("/sync")
+    public ResponseEntity<ApiResponse<DocumentSyncDto>> syncDocuments(
+            @AuthenticationPrincipal String email,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime lastSyncTime
+    ) {
+        try {
+            DocumentSyncDto response = documentService.syncDocuments(email, lastSyncTime);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(true, "Documents sync fetched successfully", response)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "Failed to fetch documents sync", null));
         }
     }
 

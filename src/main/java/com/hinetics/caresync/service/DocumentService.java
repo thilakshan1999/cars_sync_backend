@@ -1,8 +1,6 @@
 package com.hinetics.caresync.service;
 
-import com.hinetics.caresync.dto.DocumentReferenceDto;
-import com.hinetics.caresync.dto.DocumentSummaryDto;
-import com.hinetics.caresync.dto.FileUploadResult;
+import com.hinetics.caresync.dto.*;
 import com.hinetics.caresync.dto.analysed.*;
 import com.hinetics.caresync.dto.extracted.DocumentExtractedDto;
 import com.hinetics.caresync.entity.*;
@@ -15,12 +13,12 @@ import com.hinetics.caresync.service.user.CareGiverAssignmentService;
 import com.hinetics.caresync.service.user.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,6 +35,7 @@ public class DocumentService {
     private final AppointmentService appointmentService;
     private  final CareGiverAssignmentService careGiverAssignmentService;
     private  final  FileStorageService fileStorageService;
+    private  final  DeleteDocumentService deleteDocumentService;
 
     public void deleteDocumentById(Long id, String email) {
         User user = userService.getUserByEmail(email);
@@ -48,6 +47,7 @@ public class DocumentService {
         // 🆕 Delete the associated file
         deleteDocumentFile(document);
 
+        deleteDocumentService.saveDeletedDocument(document.getId(),document.getUser().getId());
         documentRepository.delete(document);
     }
 
@@ -152,7 +152,6 @@ public class DocumentService {
                 .collect(Collectors.toList());
     }
 
-
     public DocumentAnalysisDto analyzeDocument(String documentContent,Long patientId,String email) throws Exception {
         User user = userService.getUserByEmail(email);
 
@@ -250,6 +249,7 @@ public class DocumentService {
         for (Document doc : documents) {
             validateDocumentAccess(user, doc, true);
             deleteDocumentFile(doc);
+            deleteDocumentService.saveDeletedDocument(doc.getId(),doc.getUser().getId());
         }
 
         documentRepository.deleteAll(documents);
@@ -300,6 +300,30 @@ public class DocumentService {
         }
 
         return result;
+    }
+
+    public DocumentSyncDto syncDocuments(String email, LocalDateTime lastSyncTime) {
+        User user = userService.getUserByEmail(email);
+
+        List<Long> ids = new ArrayList<>();
+
+        if (user.getRole() == UserRole.PATIENT) {
+            ids.add(user.getId());
+        } else {
+            ids = careGiverAssignmentService.getPatientIdsOfCaregiver(email);
+        }
+
+        List<Document> docs = documentRepository
+                .findByUserIdInAndUpdatedTimeAfter(ids, lastSyncTime);
+
+        List<DocumentDto> documentDtoList =convertToDtoList(docs);
+
+        List<Long> deleted = deleteDocumentService
+                .getDeletedDocumentIdsForUsers(ids, lastSyncTime);
+
+        LocalDateTime serverTime = LocalDateTime.now(ZoneOffset.UTC);
+
+        return new DocumentSyncDto(documentDtoList, deleted, serverTime);
     }
 
     private void handleFile(
@@ -353,6 +377,24 @@ public class DocumentService {
         } else {
             throw new IllegalArgumentException("Invalid role: " + user.getRole());
         }
+    }
+
+    public List<DocumentDto> convertToDtoList(List<Document> documents) {
+        if (documents == null || documents.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return documents.stream()
+                .map(doc -> {
+                    DocumentDto dto = DocumentDto.fromEntity(doc);
+
+                    // Update fileUrl with signed URL if fileUrl exists
+                    if (dto.getFileUrl() != null && !dto.getFileUrl().isEmpty()) {
+                        dto.setFileUrl(fileStorageService.generateSignedUrl(dto.getFileName()));
+                    }
+                    return dto;
+                })
+                .toList();
     }
 
     public User resolveTargetUser(User user, Long patientId,boolean requireFullAccess) {

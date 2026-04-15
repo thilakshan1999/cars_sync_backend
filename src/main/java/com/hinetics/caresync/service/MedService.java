@@ -87,8 +87,8 @@ public class MedService {
                 med.setEndDate(medDto.getEndDate());
                 med.setDosage(medDto.getDosage());
                 med.setInstruction(medDto.getInstruction());
-                med.setStock(med.getStock());
-                med.setReminderLimit(med.getReminderLimit());
+                med.setStock(medDto.getStock());
+                med.setReminderLimit(medDto.getReminderLimit());
                 med.setUser(user);
 
                 meds.add(med);
@@ -122,7 +122,7 @@ public class MedService {
                 }
             }
         }
-        return  meds;
+        return meds;
     }
 
     public List<MedAnalysisDto> mapAll(List<MedExtractedDto> extractedMeds, User user) {
