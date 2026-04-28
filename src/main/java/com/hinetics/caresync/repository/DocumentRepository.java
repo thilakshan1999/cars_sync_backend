@@ -31,5 +31,5 @@ public interface DocumentRepository extends JpaRepository<Document,Long> {
     @Query("SELECT d FROM Document d JOIN d.appointments a WHERE a.id = :appointmentId")
     List<Document> findAllByAppointmentId(@Param("appointmentId") Long appointmentId);
 
-    List<Document> findByUserIdInAndUpdatedTimeAfter(List<Long> userIds, LocalDateTime lastSyncTime);
+    List<Document> findByUserIdInAndUpdatedTimeAfterOrderByUpdatedTimeAsc(List<Long> userIds, LocalDateTime lastSyncTime);
 }

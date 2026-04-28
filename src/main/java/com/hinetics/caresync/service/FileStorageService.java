@@ -10,8 +10,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,6 +62,43 @@ public class FileStorageService {
         String fileUrl = "https://storage.googleapis.com/" + bucketName + "/" + fileName;
 
         return new FileUploadResult(fileName, fileUrl,contentType);
+    }
+
+    public FileUploadResult uploadFile(File file) throws IOException {
+
+        String originalFileName = file.getName();
+        String fileName = System.currentTimeMillis() + "_" + originalFileName;
+
+        // 🔍 Detect content type
+        String contentType = Files.probeContentType(file.toPath());
+
+        if (contentType == null) {
+            if (fileName.endsWith(".pdf")) {
+                contentType = "application/pdf";
+            } else if (fileName.endsWith(".png")) {
+                contentType = "image/png";
+            } else if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+                contentType = "image/jpeg";
+            } else {
+                contentType = "application/octet-stream";
+            }
+        }
+
+        System.out.println("contentType: " + contentType);
+        System.out.println("fileName: " + fileName);
+
+        BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, fileName)
+                .setContentType(contentType)
+                .build();
+
+        // ✅ Use InputStream (better for large files)
+        try (InputStream inputStream = new FileInputStream(file)) {
+            storage.create(blobInfo, inputStream);
+        }
+
+        String fileUrl = "https://storage.googleapis.com/" + bucketName + "/" + fileName;
+
+        return new FileUploadResult(fileName, fileUrl, contentType);
     }
 
     public boolean deleteFile(String fileName) {

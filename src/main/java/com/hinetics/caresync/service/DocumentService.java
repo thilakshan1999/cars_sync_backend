@@ -314,7 +314,7 @@ public class DocumentService {
         }
 
         List<Document> docs = documentRepository
-                .findByUserIdInAndUpdatedTimeAfter(ids, lastSyncTime);
+                .findByUserIdInAndUpdatedTimeAfterOrderByUpdatedTimeAsc(ids, lastSyncTime);
 
         List<DocumentDto> documentDtoList =convertToDtoList(docs);
 
