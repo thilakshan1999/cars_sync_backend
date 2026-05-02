@@ -3,6 +3,7 @@ package com.hinetics.caresync.service;
 import com.hinetics.caresync.dto.FileUploadResult;
 import com.hinetics.caresync.entity.UploadTask;
 import com.hinetics.caresync.entity.User;
+import com.hinetics.caresync.repository.DocumentRepository;
 import com.hinetics.caresync.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
@@ -20,6 +21,7 @@ public class IncomingMailService {
     private final UploadTaskService uploadTaskService;
     private final AsyncShareProcessor asyncShareProcessor;
     private final UserService userService;
+    private  final DocumentService documentService;
 
     @Async
     public void processIncomingMailAsync(List<File> files, String email) {
@@ -47,19 +49,29 @@ public class IncomingMailService {
 
         FileUploadResult uploadResult = fileStorageService.uploadFile(file);
 
+        String hash = uploadResult.getFileHash();
+
+        // ✅ Check duplicate
+        boolean isDuplicate = documentService.checkExistsByFileHash(hash,user.getId());
+
         UploadTask task = uploadTaskService.createTask(
                 uploadResult.getFileName(),
                 uploadResult.getFileUrl(),
                 uploadResult.getFileType(),
+                hash,
                 user.getId(),
-                user.getEmail()
+                user.getEmail(),
+                isDuplicate // 👈 pass flag
         );
 
-        asyncShareProcessor.processDocumentAsync(
-                task.getId(),
-                uploadResult,
-                user.getId(),
-                user.getEmail()
-        );
+
+        if (!isDuplicate) {
+            asyncShareProcessor.processDocumentAsync(
+                    task.getId(),
+                    uploadResult,
+                    user.getId(),
+                    user.getEmail()
+            );
+        }
     }
 }

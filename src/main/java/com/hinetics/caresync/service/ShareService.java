@@ -26,20 +26,30 @@ public class ShareService {
 
         FileUploadResult uploadResult = fileStorageService.uploadFile(file);
 
+        String hash = uploadResult.getFileHash();
+
+        boolean isDuplicate = documentService.checkExistsByFileHash(hash,user.getId());
+
         UploadTask task = uploadTaskService.createTask(
                 uploadResult.getFileName(),
                 uploadResult.getFileUrl(),
                 uploadResult.getFileType(),
+                hash,
                 targetUser.getId(),
-                user.getEmail()
+                user.getEmail(),
+                isDuplicate // 👈 pass flag
         );
 
-        asyncShareProcessor.processDocumentAsync(
-                task.getId(),
-                uploadResult,
-                targetUser.getId(),
-                targetUser.getEmail()
-        );
+        if(!isDuplicate){
+            asyncShareProcessor.processDocumentAsync(
+                    task.getId(),
+                    uploadResult,
+                    targetUser.getId(),
+                    targetUser.getEmail()
+            );
+        }
+
+
     }
 
 }

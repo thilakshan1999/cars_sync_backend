@@ -33,16 +33,21 @@ public class UploadTaskService {
             String fileName,
             String fileUrl,
             String mimeType,
+            String hash,
             Long patientId,
-            String email
+            String email,
+            boolean isDuplicate
     ) {
+
         UploadTask task = UploadTask.builder()
                 .fileName(fileName)
                 .fileUrl(fileUrl)
                 .mimeType(mimeType)
                 .patientId(patientId)
+                .fileHash(hash)
                 .createdBy(email)
-                .status("PROCESSING")
+                .status(isDuplicate ? "PAUSED" : "PROCESSING")
+                .errorMessage(isDuplicate ? "This document already exists" : null)
                 .build();
 
         return uploadTaskRepository.save(task);
@@ -160,6 +165,7 @@ public class UploadTaskService {
                 documentService.analyzeDocument(extractedText, patientId, email);
 
         FileUploadResult uploadResult = new FileUploadResult();
+        uploadResult.setFileHash(task.getFileHash());
         uploadResult.setFileName(task.getFileName());
         uploadResult.setFileType(task.getMimeType());
         uploadResult.setFileUrl(task.getFileUrl());

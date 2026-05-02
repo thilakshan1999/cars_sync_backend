@@ -84,4 +84,6 @@ public class Document {
     public void updateTimestamp() {
         updatedTime = LocalDateTime.now(ZoneOffset.UTC);
     }
+
+    private String fileHash;
 }

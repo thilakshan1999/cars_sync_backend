@@ -32,4 +32,6 @@ public interface DocumentRepository extends JpaRepository<Document,Long> {
     List<Document> findAllByAppointmentId(@Param("appointmentId") Long appointmentId);
 
     List<Document> findByUserIdInAndUpdatedTimeAfterOrderByUpdatedTimeAsc(List<Long> userIds, LocalDateTime lastSyncTime);
+
+    boolean existsByFileHashAndUser_Id(String fileHash, Long userId);
 }

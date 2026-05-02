@@ -19,7 +19,6 @@ import java.nio.file.Path;
 @RequestMapping("/api/vision")
 @RequiredArgsConstructor
 public class VisionController {
-    private final CloudVisionService visionService;
     private final GeminiService geminiService;
 
     @PostMapping("/extract")

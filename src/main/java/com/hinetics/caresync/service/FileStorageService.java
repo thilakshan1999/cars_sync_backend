@@ -18,6 +18,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -61,7 +63,9 @@ public class FileStorageService {
         storage.create(blobInfo, file.getBytes());
         String fileUrl = "https://storage.googleapis.com/" + bucketName + "/" + fileName;
 
-        return new FileUploadResult(fileName, fileUrl,contentType);
+        String hash = generateFileHash(file.getInputStream());
+
+        return new FileUploadResult(fileName, fileUrl,contentType,hash);
     }
 
     public FileUploadResult uploadFile(File file) throws IOException {
@@ -98,7 +102,9 @@ public class FileStorageService {
 
         String fileUrl = "https://storage.googleapis.com/" + bucketName + "/" + fileName;
 
-        return new FileUploadResult(fileName, fileUrl, contentType);
+        String hash = generateFileHash(file);
+
+        return new FileUploadResult(fileName, fileUrl, contentType,hash);
     }
 
     public boolean deleteFile(String fileName) {
@@ -141,6 +147,33 @@ public class FileStorageService {
         } catch (IOException e) {
             e.printStackTrace();
             return null; // or throw a custom exception
+        }
+    }
+
+    public String generateFileHash(InputStream inputStream) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                digest.update(buffer, 0, bytesRead);
+            }
+
+            byte[] hash = digest.digest();
+            return Base64.getEncoder().encodeToString(hash);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate file hash", e);
+        }
+    }
+
+    private String generateFileHash(File file) {
+        try (InputStream inputStream = new FileInputStream(file)) {
+            return generateFileHash(inputStream);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate file hash", e);
         }
     }
 }

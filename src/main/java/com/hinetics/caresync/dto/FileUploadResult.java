@@ -11,4 +11,5 @@ public class FileUploadResult {
     private  String fileName; // actual stored name in bucket
     private  String fileUrl;
     private  String fileType;
+    private  String fileHash;
 }

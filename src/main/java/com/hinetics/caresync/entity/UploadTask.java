@@ -29,4 +29,6 @@ public class UploadTask {
     @Column(length = 2000)
     private String errorMessage;
 
+    private String fileHash;
+
 }

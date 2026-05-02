@@ -168,4 +168,24 @@ public class DocumentController {
                     .body(new ApiResponse<>(false, e.getMessage(), null));
         }
     }
+
+    @PostMapping("/check-duplicate")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> checkDuplicate(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "patientId", required = false) Long patientId,
+            @AuthenticationPrincipal String email
+    ) {
+        try {
+            Map<String, Object> result =
+                    documentService.checkDuplicate(file, patientId, email);
+
+            return ResponseEntity.ok(
+                    new ApiResponse<>(true, "Checked successfully", result)
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, e.getMessage(), null));
+        }
+    }
 }

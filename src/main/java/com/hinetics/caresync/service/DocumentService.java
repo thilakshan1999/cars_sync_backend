@@ -336,13 +336,16 @@ public class DocumentService {
         if (multipartFile != null && !multipartFile.isEmpty()) {
             FileUploadResult result = fileStorageService.uploadFile(multipartFile);
 
+            entity.setFileHash(result.getFileHash());
             entity.setFileName(result.getFileName());
             entity.setFileUrl(result.getFileUrl());
             entity.setFileType(result.getFileType());
+
         }
 
         // 🔹 Case 2: Already uploaded (new async flow)
         else if (fileUploadResult != null) {
+            entity.setFileHash(fileUploadResult.getFileHash());
             entity.setFileName(fileUploadResult.getFileName());
             entity.setFileUrl(fileUploadResult.getFileUrl());
             entity.setFileType(fileUploadResult.getFileType());
@@ -407,6 +410,31 @@ public class DocumentService {
             );
         }
         return user; // patient accessing own documents
+    }
+
+    public Boolean checkExistsByFileHash(String hash , Long patientId){
+        return  documentRepository.existsByFileHashAndUser_Id(hash,patientId);
+    }
+
+    public Map<String, Object> checkDuplicate(
+            MultipartFile file,
+            Long patientId,
+            String email
+    ) throws IOException {
+
+        User user = userService.getUserByEmail(email);
+        User targetUser = resolveTargetUser(user, patientId, true);
+
+        // ✅ Generate hash using your method
+        String hash = fileStorageService.generateFileHash(file.getInputStream());
+
+        boolean existsInDocs = checkExistsByFileHash(hash,targetUser.getId());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("duplicate", existsInDocs);
+        response.put("hash", hash);
+
+        return response;
     }
 }
 
